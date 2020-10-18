@@ -1,5 +1,8 @@
 module Geometry.Mesh.Base where
 
+import Data.List(foldl')
+import Data.List.NonEmpty(NonEmpty((:|)))
+
 import Linear.Matrix(M34)
 import Linear.V3(V3(V3))
 import Linear.V4(V4(V4))
@@ -14,6 +17,52 @@ type Transformer a = M34 a
 type Transformation = Transformer Scalar
 
 newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Ord, Read, Show)
+
+newtype Mesh a = Mesh (NonEmpty (Triangle a))
+
+data Box a = Box {
+    boxMin :: !(P3 a)
+  , boxMax :: !(P3 a)
+  }
+
+data Boxed a d = Boxed {
+    boxDim :: Box a
+  , boxTag :: d
+  }
+
+class Boxable f where
+    box :: Ord a => f a -> Box a
+    box = uncurry Box . box'
+    box' :: Ord a => f a -> (V3 a, V3 a)
+    box' x = let ~(Box a b) = box x in (a, b)
+    boxed :: Ord a => f a -> Boxed a (f a)
+    boxed x = Boxed (box x) x
+    {-# MINIMAL box | box' #-}
+
+instance Boxable Box where
+    box = id
+
+instance Boxable V3 where
+    box pt = Box pt pt
+
+_max3 :: Ord a => a -> a -> a -> a
+_max3 x = max . max x
+
+_min3 :: Ord a => a -> a -> a -> a
+_min3 x = min . min x
+
+_maxv3 :: Ord a => V3 a -> V3 a -> V3 a
+_maxv3 (V3 ax ay az) (V3 bx by bz) = V3 (max ax bx) (max ay by) (max az bz)
+
+_minv3 :: Ord a => V3 a -> V3 a -> V3 a
+_minv3 (V3 ax ay az) (V3 bx by bz) = V3 (min ax bx) (min ay by) (min az bz)
+
+instance Boxable Triangle where
+    box' (Triangle (V3 (V3 ax ay az) (V3 bx by bz) (V3 cx cy cz))) = ((V3 (_min3 ax ay az) (_min3 bx by bz) (_min3 cx cy cz)), (V3 (_max3 ax ay az) (_max3 bx by bz) (_max3 cx cy cz)))
+
+instance Boxable Mesh where
+    box' (Mesh (tr :| trs)) = foldl' f (box' tr) trs
+        where f ~(a0, a1) ti = let ~(b0, b1) = box' ti in (_minv3 a0 b0, _maxv3 a1 b1)
 
 eye :: Num a => Transformer a
 eye = V3 (V4 1 0 0 0) (V4 0 1 0 0) (V4 0 0 1 0)
