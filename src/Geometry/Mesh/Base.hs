@@ -18,7 +18,22 @@ type Transformation = Transformer Scalar
 
 newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Ord, Read, Show)
 
-newtype Mesh a = Mesh (NonEmpty (Triangle a))
+newtype Mesh f a = Mesh (NonEmpty (f a))
+
+_max3 :: Ord a => a -> a -> a -> a
+_max3 x = max . max x
+
+_min3 :: Ord a => a -> a -> a -> a
+_min3 x = min . min x
+
+_maxv3 :: Ord a => V3 a -> V3 a -> V3 a
+_maxv3 (V3 ax ay az) (V3 bx by bz) = V3 (max ax bx) (max ay by) (max az bz)
+
+_minv3 :: Ord a => V3 a -> V3 a -> V3 a
+_minv3 (V3 ax ay az) (V3 bx by bz) = V3 (min ax bx) (min ay by) (min az bz)
+
+_overlap :: Ord a => a -> a -> a -> a -> Bool
+_overlap a0 a1 b0 b1 = a0 <= b1 && b0 <= a1
 
 data Box a = Box {
     boxMin :: !(P3 a)
@@ -33,10 +48,15 @@ data Boxed a d = Boxed {
 class Boxable f where
     box :: Ord a => f a -> Box a
     box = uncurry Box . box'
+
     box' :: Ord a => f a -> (V3 a, V3 a)
     box' x = let ~(Box a b) = box x in (a, b)
+
     boxed :: Ord a => f a -> Boxed a (f a)
     boxed x = Boxed (box x) x
+    
+    inBox :: Ord a => f a -> Box a -> Bool
+    inBox x ~(Box ~(V3 x0 y0 z0) ~(V3 x1 y1 z1)) = let ~(~(V3 x2 y2 z2), ~(V3 x3 y3 z3)) = box' x in _overlap x0 x1 x2 x3 && _overlap y0 y1 y2 y3 && _overlap z0 z1 z2 z3
     {-# MINIMAL box | box' #-}
 
 instance Boxable Box where
@@ -45,23 +65,11 @@ instance Boxable Box where
 instance Boxable V3 where
     box pt = Box pt pt
 
-_max3 :: Ord a => a -> a -> a -> a
-_max3 x = max . max x
-
-_min3 :: Ord a => a -> a -> a -> a
-_min3 x = min . min x
-
-_maxv3 :: Ord a => V3 a -> V3 a -> V3 a
-_maxv3 (V3 ax ay az) (V3 bx by bz) = V3 (max ax bx) (max ay by) (max az bz)
-
-_minv3 :: Ord a => V3 a -> V3 a -> V3 a
-_minv3 (V3 ax ay az) (V3 bx by bz) = V3 (min ax bx) (min ay by) (min az bz)
-
 instance Boxable Triangle where
-    box' (Triangle (V3 (V3 ax ay az) (V3 bx by bz) (V3 cx cy cz))) = ((V3 (_min3 ax ay az) (_min3 bx by bz) (_min3 cx cy cz)), (V3 (_max3 ax ay az) (_max3 bx by bz) (_max3 cx cy cz)))
+    box' ~(Triangle ~(V3 ~(V3 ax ay az) ~(V3 bx by bz) ~(V3 cx cy cz))) = ((V3 (_min3 ax ay az) (_min3 bx by bz) (_min3 cx cy cz)), (V3 (_max3 ax ay az) (_max3 bx by bz) (_max3 cx cy cz)))
 
-instance Boxable Mesh where
-    box' (Mesh (tr :| trs)) = foldl' f (box' tr) trs
+instance Boxable f => Boxable (Mesh f) where
+    box' ~(Mesh ~(tr :| trs)) = foldl' f (box' tr) trs
         where f ~(a0, a1) ti = let ~(b0, b1) = box' ti in (_minv3 a0 b0, _maxv3 a1 b1)
 
 eye :: Num a => Transformer a
@@ -77,15 +85,15 @@ shiftTransformation :: Num a => a -> a -> a -> Transformer a
 shiftTransformation dx dy dz = V3 (V4 1 0 0 dx) (V4 0 1 0 dy) (V4 0 0 1 dz)
 
 shiftTransformation' :: Num a => P3 a -> Transformer a
-shiftTransformation' (V3 dx dy dz) = V3 (V4 1 0 0 dx) (V4 0 1 0 dy) (V4 0 0 1 dz)
+shiftTransformation' ~(V3 dx dy dz) = V3 (V4 1 0 0 dx) (V4 0 1 0 dy) (V4 0 0 1 dz)
 
 rotateTransformation :: Floating a => P3 a -> a -> Transformer a
-rotateTransformation (V3 nx ny nz) = rotateTransformation (V3 (nx*n) (ny*n) (nz*n))
+rotateTransformation ~(V3 nx ny nz) = rotateTransformation (V3 (nx*n) (ny*n) (nz*n))
     where n = 1.0 / sqrt (nx*nx + ny*ny + nz*nz)
 
 -- | The axis is a normal: it has length 1, so nx^2+ny^2+nz^2=1.
 rotateTransformation' :: Floating a => P3 a -> a -> Transformer a
-rotateTransformation' (V3 nx ny nz) a = V3
+rotateTransformation' ~(V3 nx ny nz) a = V3
     (V4 (ca + nx*nx*ca1) (nxy' - nz') (nxz' + ny') 0)
     (V4 (nxy' + nz') (ca + ny*ny*ca1) (nyz' - nx') 0)
     (V4 (nxz' - ny') (nyz' + nx') (ca + ny*ny*ca1) 0)
@@ -115,7 +123,7 @@ rotateZTransformation a = V3 (V4 ca (-sa) 0 0) (V4 sa ca 0 0) (V4 0 0 1 0)
           sa = sin a
 
 transformTransformation :: Num a => Transformer a -> Transformer a -> Transformer a
-transformTransformation (V3 (V4 xx xy xz dx) (V4 yx yy yz dy) (V4 zx zy zz dz)) (V3 (V4 x1 x2 x3 x4) (V4 y1 y2 y3 y4) (V4 z1 z2 z3 z4)) = V3
+transformTransformation ~(V3 ~(V4 xx xy xz dx) ~(V4 yx yy yz dy) ~(V4 zx zy zz dz)) ~(V3 ~(V4 x1 x2 x3 x4) ~(V4 y1 y2 y3 y4) ~(V4 z1 z2 z3 z4)) = V3
     (V4 (xx*x1 + xy*y1 + xz*z1 + dx) (xx*x2 + xy*y2 + xz*z2 + dx) (xx*x3 + xy*y3 + xz*z3 + dx) (xx*x4 + xy*y4 + xz*z4 + dx))
     (V4 (yx*x1 + yy*y1 + yz*z1 + dy) (yx*x2 + yy*y2 + yz*z2 + dy) (yx*x3 + yy*y3 + yz*z3 + dy) (yx*x4 + yy*y4 + yz*z4 + dy))
     (V4 (zx*x1 + zy*y1 + zz*z1 + dz) (zx*x2 + zy*y2 + zz*z2 + dz) (zx*x3 + zy*y3 + zz*z3 + dz) (zx*x4 + zy*y4 + zz*z4 + dz))
@@ -152,39 +160,39 @@ class Transformable f where
     {-# MINIMAL transform #-}
 
 instance Transformable V3 where
-    transform (V3 (V4 xx xy xz dx) (V4 yx yy yz dy) (V4 zx zy zz dz)) (V3 x y z) = V3 (xx*x + xy*y + xz*z + dx) (yx*x + yy*y + yz*z + dy) (zx*x + zy*y + zz*z + dz)
+    transform ~(V3 ~(V4 xx xy xz dx) ~(V4 yx yy yz dy) ~(V4 zx zy zz dz)) ~(V3 x y z) = V3 (xx*x + xy*y + xz*z + dx) (yx*x + yy*y + yz*z + dy) (zx*x + zy*y + zz*z + dz)
     scale = fmap . (*)
-    scale' sx sy sz (V3 x y z) = V3 (sx*x) (sy*y) (sz*z)
-    shift dx dy dz (V3 x y z) = V3 (x + dx) (y + dy) (z + dz)
+    scale' sx sy sz ~(V3 x y z) = V3 (sx*x) (sy*y) (sz*z)
+    shift dx dy dz ~(V3 x y z) = V3 (x + dx) (y + dy) (z + dz)
     shift' = (+)
-    rotateX a (V3 x y z) = (V3 x (y*ca-z*sa) (y*sa+z*ca))
+    rotateX a ~(V3 x y z) = (V3 x (y*ca-z*sa) (y*sa+z*ca))
         where ca = cos a
               sa = sin a
-    rotateY a (V3 x y z) = (V3 (x*ca+z*sa) y (z*ca-x*sa))
+    rotateY a ~(V3 x y z) = (V3 (x*ca+z*sa) y (z*ca-x*sa))
         where ca = cos a
               sa = sin a
-    rotateZ a (V3 x y z) = (V3 (x*ca-y*sa) (x*sa+y*ca) z)
+    rotateZ a ~(V3 x y z) = (V3 (x*ca-y*sa) (x*sa+y*ca) z)
         where ca = cos a
               sa = sin a
 
 instance Transformable Triangle where
-    transform t (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    transform t ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = transform t
-    scale t (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    scale t ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = scale t
-    scale' sx sy sz (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    scale' sx sy sz ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = scale' sx sy sz
-    shift dx dy dz (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    shift dx dy dz ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = shift dx dy dz
-    shift' d (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    shift' d ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = shift' d
-    rotate axis a (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    rotate axis a ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = rotate axis a
-    rotate' axis a (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    rotate' axis a ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = rotate' axis a
-    rotateX t (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    rotateX t ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = rotateX t
-    rotateY t (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    rotateY t ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = rotateY t
-    rotateZ t (Triangle (V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
+    rotateZ t ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = rotateZ t

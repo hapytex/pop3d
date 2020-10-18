@@ -17,10 +17,11 @@ library
   hs-source-dirs:      src
   exposed-modules:
       Geometry.Mesh.Base
+      Geometry.Mesh.Accelerator.Base
       Geometry.Mesh.Accelerator.BoundingVolumeHierarchy
   build-depends:
       base >= 4.7 && < 5
-    , data-default >=0.2
+    , data-default >=0.1
     , linear >=0.2
   default-language:    Haskell2010
 
