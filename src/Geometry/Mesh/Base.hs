@@ -1,7 +1,6 @@
-module Geometry.Mesh.Base where
+{-# LANGUAGE FlexibleInstances, Safe #-}
 
-import Data.List(foldl')
-import Data.List.NonEmpty(NonEmpty((:|)))
+module Geometry.Mesh.Base where
 
 import Linear.Matrix(M34)
 import Linear.V3(V3(V3))
@@ -18,7 +17,7 @@ type Transformation = Transformer Scalar
 
 newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Ord, Read, Show)
 
-newtype Mesh f a = Mesh (NonEmpty (f a))
+newtype Mesh f t a = Mesh (f (t a))
 
 _max3 :: Ord a => a -> a -> a -> a
 _max3 x = max . max x
@@ -68,9 +67,9 @@ instance Boxable V3 where
 instance Boxable Triangle where
     box' ~(Triangle ~(V3 ~(V3 ax ay az) ~(V3 bx by bz) ~(V3 cx cy cz))) = ((V3 (_min3 ax ay az) (_min3 bx by bz) (_min3 cx cy cz)), (V3 (_max3 ax ay az) (_max3 bx by bz) (_max3 cx cy cz)))
 
-instance Boxable f => Boxable (Mesh f) where
-    box' ~(Mesh ~(tr :| trs)) = foldl' f (box' tr) trs
-        where f ~(a0, a1) ti = let ~(b0, b1) = box' ti in (_minv3 a0 b0, _maxv3 a1 b1)
+instance (Boxable g, Functor f, Foldable f) => Boxable (Mesh f g) where
+    box' ~(Mesh trs) = foldl1 f (fmap box' trs)
+        where f ~(a0, a1) ~(b0, b1) = (_minv3 a0 b0, _maxv3 a1 b1)
 
 eye :: Num a => Transformer a
 eye = V3 (V4 1 0 0 0) (V4 0 1 0 0) (V4 0 0 1 0)
@@ -196,3 +195,15 @@ instance Transformable Triangle where
         where go = rotateY t
     rotateZ t ~(Triangle ~(V3 pa pb pc)) = Triangle (V3 (go pa) (go pb) (go pc))
         where go = rotateZ t
+
+instance (Functor f, Transformable g) => Transformable (Mesh f g) where
+    transform t ~(Mesh itms) = Mesh (transform t <$> itms)
+    scale t ~(Mesh itms) = Mesh (scale t <$> itms)
+    scale' sx sy sz ~(Mesh itms) = Mesh (scale' sx sy sz <$> itms)
+    shift dx dy dz ~(Mesh itms) = Mesh (shift dx dy dz <$> itms)
+    shift' d ~(Mesh itms) = Mesh (shift' d <$> itms)
+    rotate axis a ~(Mesh itms) = Mesh (rotate axis a <$> itms)
+    rotate' axis a ~(Mesh itms) = Mesh (rotate' axis a <$> itms)
+    rotateX t ~(Mesh itms) = Mesh (rotateX t <$> itms)
+    rotateY t ~(Mesh itms) = Mesh (rotateY t <$> itms)
+    rotateZ t ~(Mesh itms) = Mesh (rotateZ t <$> itms)
