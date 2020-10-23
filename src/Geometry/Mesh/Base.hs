@@ -1,6 +1,8 @@
-{-# LANGUAGE FlexibleInstances, Safe #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, FlexibleInstances, Safe #-}
 
 module Geometry.Mesh.Base where
+
+import Data.Foldable(foldl')
 
 import Linear.Matrix(M34)
 import Linear.V3(V3(V3))
@@ -17,7 +19,7 @@ type Transformation = Transformer Scalar
 
 newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Ord, Read, Show)
 
-newtype Mesh f t a = Mesh (f (t a))
+newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Functor, Foldable, Ord, Read, Show)
 
 _max3 :: Ord a => a -> a -> a -> a
 _max3 x = max . max x
@@ -37,24 +39,39 @@ _overlap a0 a1 b0 b1 = a0 <= b1 && b0 <= a1
 data Box a = Box {
     boxMin :: !(P3 a)
   , boxMax :: !(P3 a)
-  }
+  } deriving (Eq, Functor, Foldable, Ord, Read, Show)
+
+instance Ord a => Semigroup (Box a) where
+    ~(Box ami ama) <> ~(Box bmi bma) = Box (_minv3 ami bmi) (_maxv3 ama bma)
 
 data Boxed a d = Boxed {
     boxDim :: Box a
   , boxTag :: d
   }
 
+class SurfaceEstimate f where
+    surfaceEstimate :: Num a => f a -> a
+
+instance SurfaceEstimate V3 where
+    surfaceEstimate = const 0
+
+instance (Foldable f, SurfaceEstimate s) => SurfaceEstimate (Mesh f s) where
+    surfaceEstimate ~(Mesh ms) = foldl' ((. surfaceEstimate) . (+)) 0 ms
+
+instance SurfaceEstimate Box where
+    surfaceEstimate (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 2*(bx + by + bz - ax - ay - az)
+
 class Boxable f where
-    box :: Ord a => f a -> Box a
+    box :: (Num a, Ord a) => f a -> Box a
     box = uncurry Box . box'
 
-    box' :: Ord a => f a -> (V3 a, V3 a)
+    box' :: (Num a, Ord a) => f a -> (V3 a, V3 a)
     box' x = let ~(Box a b) = box x in (a, b)
 
-    boxed :: Ord a => f a -> Boxed a (f a)
+    boxed :: (Num a, Ord a) => f a -> Boxed a (f a)
     boxed x = Boxed (box x) x
     
-    inBox :: Ord a => f a -> Box a -> Bool
+    inBox :: (Num a, Ord a) => f a -> Box a -> Bool
     inBox x ~(Box ~(V3 x0 y0 z0) ~(V3 x1 y1 z1)) = let ~(~(V3 x2 y2 z2), ~(V3 x3 y3 z3)) = box' x in _overlap x0 x1 x2 x3 && _overlap y0 y1 y2 y3 && _overlap z0 z1 z2 z3
     {-# MINIMAL box | box' #-}
 
