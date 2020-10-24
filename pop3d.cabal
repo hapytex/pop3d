@@ -18,6 +18,7 @@ library
   exposed-modules:
       Geometry.Mesh.Base
       Geometry.Mesh.Accelerator.Base
+      Geometry.Mesh.Accelerator.Naive
       Geometry.Mesh.Accelerator.BoundingVolumeHierarchy
   build-depends:
       base >= 4.7 && < 5

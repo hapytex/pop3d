@@ -17,9 +17,9 @@ type Point3 = P3 Scalar
 type Transformer a = M34 a
 type Transformation = Transformer Scalar
 
-newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Ord, Read, Show)
+newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
-newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Functor, Foldable, Ord, Read, Show)
+newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
 _max3 :: Ord a => a -> a -> a -> a
 _max3 x = max . max x
@@ -39,15 +39,16 @@ _overlap a0 a1 b0 b1 = a0 <= b1 && b0 <= a1
 data Box a = Box {
     boxMin :: !(P3 a)
   , boxMax :: !(P3 a)
-  } deriving (Eq, Functor, Foldable, Ord, Read, Show)
+  } deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
 instance Ord a => Semigroup (Box a) where
     ~(Box ami ama) <> ~(Box bmi bma) = Box (_minv3 ami bmi) (_maxv3 ama bma)
 
-data Boxed a d = Boxed {
+data Boxed d a = Boxed {
     boxDim :: Box a
-  , boxTag :: d
+  , boxTag :: d a
   }
+  deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
 class SurfaceEstimate f where
     surfaceEstimate :: Num a => f a -> a
@@ -68,7 +69,7 @@ class Boxable f where
     box' :: (Num a, Ord a) => f a -> (V3 a, V3 a)
     box' x = let ~(Box a b) = box x in (a, b)
 
-    boxed :: (Num a, Ord a) => f a -> Boxed a (f a)
+    boxed :: (Num a, Ord a) => f a -> Boxed f a
     boxed x = Boxed (box x) x
     
     inBox :: (Num a, Ord a) => f a -> Box a -> Bool
