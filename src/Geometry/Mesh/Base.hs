@@ -21,6 +21,12 @@ newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Foldable, Functor, Ord, 
 
 newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
+instance Semigroup (f (t a)) => Semigroup (Mesh f t a) where
+    ~(Mesh fa) <> ~(Mesh fb) = Mesh (fa <> fb)
+
+instance Monoid (f (t a)) => Monoid (Mesh f t a) where
+    mempty = Mesh mempty
+
 _max3 :: Ord a => a -> a -> a -> a
 _max3 x = max . max x
 
@@ -41,6 +47,9 @@ data Box a = Box {
   , boxMax :: !(P3 a)
   } deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
+centroid2 :: Num a => Box a -> V3 a
+centroid2 (Box ma mb) = ma + mb
+
 instance Ord a => Semigroup (Box a) where
     ~(Box ami ama) <> ~(Box bmi bma) = Box (_minv3 ami bmi) (_maxv3 ama bma)
 
@@ -51,16 +60,36 @@ data Boxed d a = Boxed {
   deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
 class SurfaceEstimate f where
-    surfaceEstimate :: Num a => f a -> a
+    -- the surface estimate returns an estimate of the surface area squared and
+    -- times two. This makes it more convenient since the number type does not
+    -- need to represent a square root, and comparing the values is still
+    -- possible.
+    surfaceEstimate' :: Num a => f a -> a
 
 instance SurfaceEstimate V3 where
-    surfaceEstimate = const 0
+    surfaceEstimate' = const 0
 
 instance (Foldable f, SurfaceEstimate s) => SurfaceEstimate (Mesh f s) where
-    surfaceEstimate ~(Mesh ms) = foldl' ((. surfaceEstimate) . (+)) 0 ms
+    surfaceEstimate' ~(Mesh ms) = foldl' ((. surfaceEstimate') . (+)) 0 ms
 
 instance SurfaceEstimate Box where
-    surfaceEstimate (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 2*(bx + by + bz - ax - ay - az)
+    surfaceEstimate' (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 4*dd*dd
+        where dx = bx - ax
+              dy = by - ay
+              dz = bz - az
+              dd = dx*dy + dx*dz + dy*dz
+
+instance SurfaceEstimate Triangle where
+    surfaceEstimate' ~(Triangle ~(V3 ~(V3 ax ay az) ~(V3 bx by bz) ~(V3 cx cy cz))) = dxy*dxy + dxz*dxz + dyz*dyz
+        where abx = bx - ax
+              aby = by - ay
+              abz = bz - az
+              acx = cx - ax
+              acy = cy - ay
+              acz = cz - az
+              dxy = abx * acy - aby * acx
+              dxz = abx * acz - abz * acx
+              dyz = aby * acz - abz * acy
 
 class Boxable f where
     box :: (Num a, Ord a) => f a -> Box a
@@ -144,6 +173,10 @@ transformTransformation ~(V3 ~(V4 xx xy xz dx) ~(V4 yx yy yz dy) ~(V4 zx zy zz d
     (V4 (xx*x1 + xy*y1 + xz*z1 + dx) (xx*x2 + xy*y2 + xz*z2 + dx) (xx*x3 + xy*y3 + xz*z3 + dx) (xx*x4 + xy*y4 + xz*z4 + dx))
     (V4 (yx*x1 + yy*y1 + yz*z1 + dy) (yx*x2 + yy*y2 + yz*z2 + dy) (yx*x3 + yy*y3 + yz*z3 + dy) (yx*x4 + yy*y4 + yz*z4 + dy))
     (V4 (zx*x1 + zy*y1 + zz*z1 + dz) (zx*x2 + zy*y2 + zz*z2 + dz) (zx*x3 + zy*y3 + zz*z3 + dz) (zx*x4 + zy*y4 + zz*z4 + dz))
+
+--class Intersectable a where
+--    intersect :: Ray -> a -> ()
+--    intersectFirst :: Ray -> a -> ()
 
 class Transformable f where
     transform :: Num a => Transformer a -> f a -> f a
