@@ -21,6 +21,13 @@ newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Foldable, Functor, Ord, 
 
 newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
 
+data Ray a = Ray {
+    origin :: V3 a
+  , direction :: V3 a
+  , near :: a
+  , far :: a
+  } deriving (Eq, Ord, Read, Show)
+
 instance Semigroup (f (t a)) => Semigroup (Mesh f t a) where
     ~(Mesh fa) <> ~(Mesh fb) = Mesh (fa <> fb)
 

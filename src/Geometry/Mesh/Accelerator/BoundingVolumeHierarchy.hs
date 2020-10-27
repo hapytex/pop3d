@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveFoldable, DeriveFunctor #-}
+{-# LANGUAGE BangPatterns, DeriveFoldable, DeriveFunctor, Safe #-}
 
 module Geometry.Mesh.Accelerator.BoundingVolumeHierarchy where
 
@@ -72,16 +72,3 @@ buildBVH _ ~(Mesh fo)
           go e@(_:_:_:_) b
               | Just (_, ab, aes, bb, bes) <- bestOfBoxings e = BVHNode b (go aes ab) (go bes bb)
           go e _ = BVHLeaf e 
-
--- | Return the best partition of the list of boxeds.
-{-
-partitionBoxeds :: (Boxable a) => [Boxed a] -> Maybe (BoxedPartition a)
-partitionBoxeds boxeds = bestPartition $ catMaybes $ [partx, party, partz]
-    where
-        sortedx = sortWith (\b -> f3x (centroid $ box b)) boxeds
-        sortedy = sortWith (\b -> f3y (centroid $ box b)) boxeds
-        sortedz = sortWith (\b -> f3z (centroid $ box b)) boxeds
-        partx = bestPartition $ makePartitions sortedx
-        party = bestPartition $ makePartitions sortedy
-        partz = bestPartition $ makePartitions sortedz
--}
