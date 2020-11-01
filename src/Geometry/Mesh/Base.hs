@@ -28,6 +28,28 @@ data Ray a = Ray {
   , far :: a
   } deriving (Eq, Ord, Read, Show)
 
+_min2 :: Ord a => (a, a) -> (a, a) -> (a, a)
+_min2 ~(a1, b1) ~(a2, b2) = (max a1 a2, min b1 b2)
+
+_min2unord2 :: Ord a => (a, a) -> (a, a) -> (a, a)
+_min2unord2 ~(a1, b1) ~(a2, b2)
+    | a2 <= b2 = (max a1 a2, min b1 b2)
+    | otherwise = (max a1 b2, min b1 a2)
+
+_swapOrd :: Ord a => (a, a) -> (a, a)
+_swapOrd ~(x, y)
+    | x <= y = (x, y)
+    | otherwise = (y, x)
+
+rayHitsBox :: Num a => Ray a -> Box a -> Bool
+rayHitsBox ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = True
+    where tx2 = bx - ox
+          tx1 = ax - ox
+          ty2 = by - oy
+          ty1 = ay - oy
+          tz2 = bz - oz
+          tz1 = az - oz
+
 instance Semigroup (f (t a)) => Semigroup (Mesh f t a) where
     ~(Mesh fa) <> ~(Mesh fb) = Mesh (fa <> fb)
 
