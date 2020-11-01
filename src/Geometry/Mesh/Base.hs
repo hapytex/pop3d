@@ -1,6 +1,10 @@
 {-# LANGUAGE FlexibleInstances, Safe #-}
 
-module Geometry.Mesh.Base where
+module Geometry.Mesh.Base (
+    Scalar
+  , P3, Point3
+  , SurfaceEstimate(surfaceEstimate')
+  ) where
 
 import Linear.V3(V3)
 
@@ -9,20 +13,6 @@ type Scalar = Double
 
 type P3 a = V3 a
 type Point3 = P3 Scalar
-
-_min2 :: Ord a => (a, a) -> (a, a) -> (a, a)
-_min2 ~(a1, b1) ~(a2, b2) = (max a1 a2, min b1 b2)
-
-_min2unord2 :: Ord a => (a, a) -> (a, a) -> (a, a)
-_min2unord2 ~(a1, b1) ~(a2, b2)
-    | a2 <= b2 = (max a1 a2, min b1 b2)
-    | otherwise = (max a1 b2, min b1 a2)
-
-_swapOrd :: Ord a => (a, a) -> (a, a)
-_swapOrd ~(x, y)
-    | x <= y = (x, y)
-    | otherwise = (y, x)
-
 
 class SurfaceEstimate f where
     -- the surface estimate returns an estimate of the surface area squared and

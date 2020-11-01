@@ -1,6 +1,8 @@
 {-# LANGUAGE Safe #-}
 
-module Geometry.Mesh.Ray where
+module Geometry.Mesh.Ray (
+    Ray(Ray, origin, direction, near, far)
+  ) where
 
 import Linear.V3(V3)
 

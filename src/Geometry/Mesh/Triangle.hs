@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveFoldable, DeriveFunctor, Safe #-}
 
-module Geometry.Mesh.Triangle where
+module Geometry.Mesh.Triangle (
+    Triangle(Triangle)
+  ) where
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Box(Boxable(box'))

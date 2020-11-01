@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveFoldable, DeriveFunctor, Safe #-}
 
-module Geometry.Mesh.Mesh where
+module Geometry.Mesh.Mesh (
+    Mesh(Mesh)
+  ) where
 
 import Data.Foldable(foldl')
 
