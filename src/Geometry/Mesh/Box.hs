@@ -3,7 +3,6 @@
 module Geometry.Mesh.Box (
     Box(Box, boxMin, boxMax)
   , Boxable(box, box', inBox)
-  , rayHitsBox
   , centroid2
   ) where
 
@@ -11,7 +10,7 @@ import Data.Maybe(isJust)
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Internal(overlap, maxv3, minv3, normalizeDirection)
-import Geometry.Mesh.Ray(Ray(Ray))
+import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHits))
 
 import Linear.V3(V3(V3))
 
@@ -56,13 +55,13 @@ mergeWith _ m ox ax bx = go
           bb = m * bx - mox
          
 
-rayHitsBox :: (Ord a, Num a) => Ray a -> Box a -> Bool
-rayHitsBox ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = isJust (mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= mergeWith zy (nx*nz) oy ay by >>= mergeWith zz nxy oz az bz)
-    where (zx, nx) = normalizeDirection dx
-          (zy, ny) = normalizeDirection dy
-          (zz, nz) = normalizeDirection dz
-          nxy = nx * ny
-          nxyz = nxy * nz
+instance Hittable Box where
+    rayHits ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = isJust (mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= mergeWith zy (nx*nz) oy ay by >>= mergeWith zz nxy oz az bz)
+        where (zx, nx) = normalizeDirection dx
+              (zy, ny) = normalizeDirection dy
+              (zz, nz) = normalizeDirection dz
+              nxy = nx * ny
+              nxyz = nxy * nz
 
 instance SurfaceEstimate Box where
     surfaceEstimate' (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 4*dd*dd

@@ -12,6 +12,7 @@ import Data.List(minimumBy, sortOn)
 import Geometry.Mesh.Box(Box(Box), Boxable(box), centroid2)
 import Geometry.Mesh.Internal(v3x, v3y, v3z)
 import Geometry.Mesh.Mesh(Mesh(Mesh))
+import Geometry.Mesh.Ray(Hittable(rayHits))
 
 import Linear.V3(V3(V3))
 
@@ -71,4 +72,9 @@ buildBVH _ ~(Mesh fo)
           obs = map ((,) <*> box) lo
           go e@(_:_:_:_) b
               | Just (_, ab, aes, bb, bes) <- bestOfBoxingPartitionings e = BVHNode b (go aes ab) (go bes bb)
-          go e _ = BVHLeaf e 
+          go e _ = BVHLeaf e
+
+instance Hittable f => Hittable (BVH f) where
+    rayHits ray = go
+        where go (BVHLeaf es) = any (rayHits ray) (map fst es)
+              go (BVHNode b l r) = rayHits ray b && (go l || go r)

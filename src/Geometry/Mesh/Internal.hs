@@ -5,6 +5,7 @@ module Geometry.Mesh.Internal (
   , max3, min3
   , maxv3, minv3
   , v3x, v3y, v3z
+  , dot
   , normalizeDirection, normalizeDirection'
   ) where
 
@@ -21,6 +22,9 @@ v3y ~(V3 _ y _) = y
 
 v3z :: V3 a -> a
 v3z ~(V3 _ _ z) = z
+
+dot :: Num a => V3 a -> V3 a -> a
+dot ~(V3 ax ay az) ~(V3 bx by bz) = ax*bx + ay*by + az*bz
 
 max3 :: Ord a => a -> a -> a -> a
 max3 x = max . max x
