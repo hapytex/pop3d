@@ -6,7 +6,8 @@ import Data.Default(Default(def))
 import Data.Foldable(foldl', toList)
 import Data.List(minimumBy, sortOn)
 
-import Geometry.Mesh.Base(Box(Box), Boxable, Mesh(Mesh), box, centroid2)
+import Geometry.Mesh.Box(Box(Box), Boxable(box), centroid2)
+import Geometry.Mesh.Mesh(Mesh(Mesh))
 
 import Linear.V3(V3(V3))
 

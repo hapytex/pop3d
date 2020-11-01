@@ -16,10 +16,18 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:
-      Geometry.Mesh.Base
-      Geometry.Mesh.Accelerator.Base
-      Geometry.Mesh.Accelerator.Naive
-      Geometry.Mesh.Accelerator.BoundingVolumeHierarchy
+      Geometry.Mesh
+    , Geometry.Mesh.Base
+    , Geometry.Mesh.Box
+    , Geometry.Mesh.Mesh
+    , Geometry.Mesh.Ray
+    , Geometry.Mesh.Transform
+    , Geometry.Mesh.Triangle
+    , Geometry.Mesh.Accelerator.Base
+    , Geometry.Mesh.Accelerator.Naive
+    , Geometry.Mesh.Accelerator.BoundingVolumeHierarchy
+  other-modules:
+      Geometry.Mesh.Internal
   build-depends:
       base >= 4.7 && < 5
     , data-default >=0.1
