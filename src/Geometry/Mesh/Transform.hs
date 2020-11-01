@@ -104,13 +104,13 @@ instance Transformable V3 where
     scale' sx sy sz ~(V3 x y z) = V3 (sx*x) (sy*y) (sz*z)
     shift dx dy dz ~(V3 x y z) = V3 (x + dx) (y + dy) (z + dz)
     shift' = (+)
-    rotateX a ~(V3 x y z) = (V3 x (y*ca-z*sa) (y*sa+z*ca))
+    rotateX a ~(V3 x y z) = V3 x (y*ca-z*sa) (y*sa+z*ca)
         where ca = cos a
               sa = sin a
-    rotateY a ~(V3 x y z) = (V3 (x*ca+z*sa) y (z*ca-x*sa))
+    rotateY a ~(V3 x y z) = V3 (x*ca+z*sa) y (z*ca-x*sa)
         where ca = cos a
               sa = sin a
-    rotateZ a ~(V3 x y z) = (V3 (x*ca-y*sa) (x*sa+y*ca) z)
+    rotateZ a ~(V3 x y z) = V3 (x*ca-y*sa) (x*sa+y*ca) z
         where ca = cos a
               sa = sin a
 

@@ -35,7 +35,7 @@ boxingl [] = []
 boxingl ~(i@(~(_, bi)):is) = go is [i] 1 bi
     where go [] _ _ _ = []
           go ~(x@(~(_, bx)):xs) ls !n b = (b, ls, costFunction n b) : go xs yss (n + 1) (b <> bx)
-              where yss = (x:ls)
+              where yss = x:ls
 
 boxingr :: (Boxable f, Num a, Ord a) => [(f a, Box a)] -> [(Box a, [(f a, Box a)], a)]
 boxingr = reverse . boxingl . reverse
