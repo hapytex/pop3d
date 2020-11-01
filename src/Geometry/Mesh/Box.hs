@@ -7,6 +7,8 @@ module Geometry.Mesh.Box (
   , centroid2
   ) where
 
+import Data.Maybe(isJust)
+
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Internal(overlap, maxv3, minv3, normalizeDirection)
 import Geometry.Mesh.Ray(Ray(Ray))
@@ -41,39 +43,26 @@ instance Boxable Box where
 instance Boxable V3 where
     box pt = Box pt pt
 
-{-
-_min2 :: Ord a => (a, a) -> (a, a) -> (a, a)
-_min2 ~(a1, b1) ~(a2, b2) = (max a1 a2, min b1 b2)
-
-_min2unord2 :: Ord a => (a, a) -> (a, a) -> (a, a)
-_min2unord2 ~(a1, b1) ~(a2, b2)
-    | a2 <= b2 = (max a1 a2, min b1 b2)
-    | otherwise = (max a1 b2, min b1 a2)
-
-_swapOrd :: Ord a => (a, a) -> (a, a)
-_swapOrd ~(x, y)
-    | x <= y = (x, y)
-    | otherwise = (y, x)
-
-
-mergeWith :: (Num a, Ord a) => Maybe (a, a) -> a -> a -> a -> Maybe (a, a)
-mergeWith Nothing = const (const (const Nothing))
-mergeWith b@(Just _) = go
-    where go 0 = const (const Nothing)
-          go _ = const (const b)
--}
+mergeWith :: (Num a, Ord a) => Bool -> a -> a -> a -> a -> (a, a) -> Maybe (a, a)
+mergeWith True _ ox ax bx | ax <= ox && ox <= bx = Just
+                          | otherwise = const Nothing
+mergeWith _ m ox ax bx = go
+    where go ~(a0, a1) | b0 < b1 = Just (b0, b1)
+                       | otherwise = Nothing
+              where b0 = max (min ba bb) a0
+                    b1 = min (max ba bb) a1
+          mox = m * ox
+          ba = m * ax - mox
+          bb = m * bx - mox
+         
 
 rayHitsBox :: (Ord a, Num a) => Ray a -> Box a -> Bool
-rayHitsBox ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = denom > n + f && n * f > ax+bx+ay+by+az+bz && ox < oy + oz
-    where denom = normalizeDirection dx * normalizeDirection dy * normalizeDirection dz
-{-
-    where tx2 = bx - ox
-          tx1 = ax - ox
-          ty2 = by - oy
-          ty1 = ay - oy
-          tz2 = bz - oz
-          tz1 = az - oz
--}
+rayHitsBox ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = isJust (mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= mergeWith zy (nx*nz) oy ay by >>= mergeWith zz nxy oz az bz)
+    where (zx, nx) = normalizeDirection dx
+          (zy, ny) = normalizeDirection dy
+          (zz, nz) = normalizeDirection dz
+          nxy = nx * ny
+          nxyz = nxy * nz
 
 instance SurfaceEstimate Box where
     surfaceEstimate' (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 4*dd*dd
