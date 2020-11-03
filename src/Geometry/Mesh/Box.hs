@@ -42,10 +42,10 @@ instance Boxable Box where
 instance Boxable V3 where
     box pt = Box pt pt
 
-mergeWith :: (Num a, Ord a) => Bool -> a -> a -> a -> a -> (a, a) -> Maybe (a, a)
-mergeWith True _ ox ax bx | ax <= ox && ox <= bx = Just
-                          | otherwise = const Nothing
-mergeWith _ m ox ax bx = go
+_mergeWith :: (Num a, Ord a) => Bool -> a -> a -> a -> a -> (a, a) -> Maybe (a, a)
+_mergeWith True _ ox ax bx | ax <= ox && ox <= bx = Just
+                           | otherwise = const Nothing
+_mergeWith _ m ox ax bx = go
     where go ~(a0, a1) | b0 < b1 = Just (b0, b1)
                        | otherwise = Nothing
               where b0 = max (min ba bb) a0
@@ -55,13 +55,12 @@ mergeWith _ m ox ax bx = go
           bb = m * bx - mox
 
 _checkHit :: (Num a, Ord a) => (a -> Maybe (a, a) -> b) -> Ray a -> Box a -> b
-_checkHit pp ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = pp nxyz (mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= mergeWith zy (nx*nz) oy ay by >>= mergeWith zz nxy oz az bz)
+_checkHit pp ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = pp nxyz (_mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= _mergeWith zy (nx*nz) oy ay by >>= _mergeWith zz nxy oz az bz)
         where (zx, nx) = normalizeDirection dx
               (zy, ny) = normalizeDirection dy
               (zz, nz) = normalizeDirection dz
               nxy = nx * ny
               nxyz = nxy * nz
-
 
 instance Hittable Box where
     rayHits = _checkHit (const isJust)

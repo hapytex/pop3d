@@ -9,6 +9,7 @@ import Data.Foldable(foldl')
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'))
 import Geometry.Mesh.Box(Boxable(box'))
 import Geometry.Mesh.Internal(maxv3, minv3)
+import Geometry.Mesh.Ray(Hittable(rayHits, rayHitsAt'))
 import Geometry.Mesh.Transform(Transformable(transform, scale, scale', shift, shift', rotate, rotate', rotateX, rotateY, rotateZ))
 
 newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
@@ -37,3 +38,7 @@ instance (Functor f, Transformable g) => Transformable (Mesh f g) where
     rotateX t ~(Mesh itms) = Mesh (rotateX t <$> itms)
     rotateY t ~(Mesh itms) = Mesh (rotateY t <$> itms)
     rotateZ t ~(Mesh itms) = Mesh (rotateZ t <$> itms)
+
+instance (Foldable f, Hittable g) => Hittable (Mesh f g) where
+    rayHits ray ~(Mesh es) = any (rayHits ray) es
+    rayHitsAt' ray ~(Mesh es) tl = foldr (rayHitsAt' ray) tl es
