@@ -6,7 +6,7 @@ module Geometry.Mesh.Triangle (
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Box(Boxable(box'))
-import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHitsAt'), HitPoint(HitPoint))
+import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHitsAt'), hitPoint)
 import Geometry.Mesh.Internal(maxv3, minv3, dot)
 import Geometry.Mesh.Transform(Transformable(transform, scale, scale', shift, shift', rotate, rotate', rotateX, rotateY, rotateZ))
 
@@ -53,7 +53,7 @@ instance Transformable Triangle where
 
 instance Hittable Triangle where
     rayHitsAt' ~(Ray o rd n f) ~(Triangle ~(V3 p0 p1 p2)) tl
-        | u >= 0 && v >= 0 && u + v <= a && t >= n*a && t <= n*f = HitPoint t n : tl
+        | u >= 0 && v >= 0 && u + v <= a && t >= n*a && t <= n*f = hitPoint t n : tl
         | otherwise = tl
         where e01 = p1 - p0
               e02 = p2 - p0
