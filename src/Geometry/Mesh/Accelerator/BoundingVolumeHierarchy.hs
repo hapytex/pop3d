@@ -76,10 +76,14 @@ buildBVH _ ~(Mesh fo)
 
 instance Hittable f => Hittable (BVH f) where
     rayHits ray = go
-        where go (BVHLeaf es) = any (rayHits ray . fst) es
-              go ~(BVHNode b l r) = rayHits ray b && (go l || go r)
+        where go (BVHLeaf es) = any go' es
+              go ~(BVHNode b l r) = gob b && (go l || go r)
+              go' = rayHits ray . fst
+              gob = rayHits ray
     rayHitsAt' ray = go
-        where go (BVHLeaf es) tl = foldr (rayHitsAt' ray . fst) tl es
+        where go (BVHLeaf es) tl = go' tl es
               go ~(BVHNode b l r) tl
-                  | rayHits ray b = go l (go r tl)
+                  | gob b = go l (go r tl)
                   | otherwise = tl
+              go' = foldr (rayHitsAt' ray . fst)
+              gob = rayHits ray

@@ -6,9 +6,11 @@ module Geometry.Mesh.Box (
   , centroid2
   ) where
 
+import Data.Maybe(isJust)
+
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Internal(overlap, maxv3, minv3, normalizeDirection)
-import Geometry.Mesh.Ray(Ray(Ray), HitPoint(HitPoint), Hittable(rayHitsAt'))
+import Geometry.Mesh.Ray(Ray(Ray), HitPoint(HitPoint), Hittable(rayHits, rayHitsAt'))
 
 import Linear.V3(V3(V3))
 
@@ -51,17 +53,22 @@ mergeWith _ m ox ax bx = go
           mox = m * ox
           ba = m * ax - mox
           bb = m * bx - mox
-         
 
-instance Hittable Box where
-    rayHitsAt' ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) tl = go (mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= mergeWith zy (nx*nz) oy ay by >>= mergeWith zz nxy oz az bz)
+_checkHit :: (Num a, Ord a) => (a -> Maybe (a, a) -> b) -> Ray a -> Box a -> b
+_checkHit pp ~(Ray ~(V3 ox oy oz) ~(V3 dx dy dz) n f) ~(Box ~(V3 ax ay az) ~(V3 bx by bz)) = pp nxyz (mergeWith zx (ny*nz) ox ax bx (nxyz*n, nxyz*f) >>= mergeWith zy (nx*nz) oy ay by >>= mergeWith zz nxy oz az bz)
         where (zx, nx) = normalizeDirection dx
               (zy, ny) = normalizeDirection dy
               (zz, nz) = normalizeDirection dz
               nxy = nx * ny
               nxyz = nxy * nz
-              go (Just ~(a, b)) = HitPoint a nxyz : HitPoint b nxyz : tl
-              go ~Nothing = tl
+
+
+instance Hittable Box where
+    rayHits = _checkHit (const isJust)
+
+    rayHitsAt' = _checkHit go
+        where go nxyz (Just ~(a, b)) = \tl -> HitPoint a nxyz : HitPoint b nxyz : tl
+              go _ ~Nothing = id
 
 instance SurfaceEstimate Box where
     surfaceEstimate' (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 4*dd*dd
