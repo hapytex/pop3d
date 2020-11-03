@@ -6,6 +6,7 @@ module Geometry.Mesh.Internal (
   , maxv3, minv3
   , v3x, v3y, v3z
   , dot
+  , notNull
   , normalizeDirection, normalizeDirection'
   ) where
 
@@ -31,6 +32,9 @@ max3 x = max . max x
 
 min3 :: Ord a => a -> a -> a -> a
 min3 x = min . min x
+
+notNull :: Foldable f => f a -> Bool
+notNull = not . null
 
 maxv3 :: Ord a => V3 a -> V3 a -> V3 a
 maxv3 ~(V3 ax ay az) ~(V3 bx by bz) = V3 (max ax bx) (max ay by) (max az bz)

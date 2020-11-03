@@ -12,7 +12,7 @@ import Data.List(minimumBy, sortOn)
 import Geometry.Mesh.Box(Box(Box), Boxable(box), centroid2)
 import Geometry.Mesh.Internal(v3x, v3y, v3z)
 import Geometry.Mesh.Mesh(Mesh(Mesh))
-import Geometry.Mesh.Ray(Hittable(rayHits))
+import Geometry.Mesh.Ray(Hittable(rayHits, rayHitsAt'))
 
 import Linear.V3(V3(V3))
 
@@ -77,4 +77,9 @@ buildBVH _ ~(Mesh fo)
 instance Hittable f => Hittable (BVH f) where
     rayHits ray = go
         where go (BVHLeaf es) = any (rayHits ray) (map fst es)
-              go (BVHNode b l r) = rayHits ray b && (go l || go r)
+              go ~(BVHNode b l r) = rayHits ray b && (go l || go r)
+    rayHitsAt' ray = go
+        where go (BVHLeaf es) tl = foldr (rayHitsAt' ray . fst) tl es
+              go ~(BVHNode b l r) tl
+                  | rayHits ray b = (go l) (go r tl)
+                  | otherwise = tl
