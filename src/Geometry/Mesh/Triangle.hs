@@ -52,9 +52,9 @@ instance Transformable Triangle where
         where go = rotateZ t
 
 instance Hittable Triangle where
-    rayHitsAt' ~(Ray o rd n f) ~(Triangle ~(V3 p0 p1 p2)) tl
-        | u >= 0 && v >= 0 && u + v <= a && t >= n*a && t <= n*f = hitPoint t n : tl
-        | otherwise = tl
+    rayHitsAt' ~(Ray o rd n f) ~(Triangle ~(V3 p0 p1 p2))
+        | u >= 0 && v >= 0 && u + v <= a && t >= n*a && t <= n*f = (hitPoint t n :)
+        | otherwise = id
         where e01 = p1 - p0
               e02 = p2 - p0
               h = cross rd e02

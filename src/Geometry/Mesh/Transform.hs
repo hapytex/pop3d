@@ -1,6 +1,15 @@
 {-# LANGUAGE Safe #-}
 
-module Geometry.Mesh.Transform where
+module Geometry.Mesh.Transform (
+    Transformer, Transformation
+  , eye
+  , scaleTransformation, scaleTransformation'
+  , shiftTransformation, shiftTransformation'
+  , rotateTransformation, rotateTransformation'
+  , rotateXTransformation, rotateYTransformation, rotateZTransformation
+  , transformTransformation
+  , Transformable(transform, scale, scale', shift, shift', rotate, rotate', rotateX, rotateY, rotateZ)
+  ) where
 
 import Geometry.Mesh.Base(P3, Scalar)
 
