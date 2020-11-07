@@ -9,7 +9,7 @@ module Geometry.Mesh.Internal (
   , notNull
   , normalizeDirection, normalizeDirection'
   , fMaybe, nonEmptyMaybe
-  , eolf, spaceFloating, toEndOfLine
+  , eolf, spaced, spaceFloating, toEndOfLine
   ) where
 
 import Control.Applicative((<|>))
@@ -29,8 +29,11 @@ eolf = eof <|> eol
 toEndOfLine :: Stream s m Char => ParsecT s u m ()
 toEndOfLine = skipMany (satisfy ('\n' /=))
 
+spaced :: Stream s m Char => ParsecT s u m a -> ParsecT s u m a
+spaced = (spaces *>)
+
 spaceFloating :: (Floating a, Stream s m Char) => ParsecT s u m a
-spaceFloating = spaces *> floating
+spaceFloating = spaced floating
 
 overlap :: Ord a => a -> a -> a -> a -> Bool
 overlap a0 a1 b0 b1 = a0 <= b1 && b0 <= a1
