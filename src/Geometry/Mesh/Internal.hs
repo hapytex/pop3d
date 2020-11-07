@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, Safe #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, Safe #-}
 
 module Geometry.Mesh.Internal (
     overlap
@@ -8,9 +8,29 @@ module Geometry.Mesh.Internal (
   , dot
   , notNull
   , normalizeDirection, normalizeDirection'
+  , fMaybe, nonEmptyMaybe
+  , eolf, spaceFloating, toEndOfLine
   ) where
 
+import Control.Applicative((<|>))
+
 import Linear.V3(V3(V3))
+
+import Text.Parsec(ParsecT, Stream, eof, skipMany)
+import Text.Parsec.Char(char, satisfy, spaces)
+import Text.Parsec.Number(floating)
+
+eol :: Stream s m Char => ParsecT s u m ()
+eol = char '\n' *> pure ()
+
+eolf :: Stream s m Char => ParsecT s u m ()
+eolf = eof <|> eol
+
+toEndOfLine :: Stream s m Char => ParsecT s u m ()
+toEndOfLine = skipMany (satisfy ('\n' /=))
+
+spaceFloating :: (Floating a, Stream s m Char) => ParsecT s u m a
+spaceFloating = spaces *> floating
 
 overlap :: Ord a => a -> a -> a -> a -> Bool
 overlap a0 a1 b0 b1 = a0 <= b1 && b0 <= a1
@@ -49,3 +69,13 @@ normalizeDirection' x = x
 normalizeDirection :: (Eq a, Num a) => a -> (Bool, a)
 normalizeDirection 0 = (True, 1)
 normalizeDirection x = (False, x)
+
+nonEmptyMaybe :: ([a] -> a) -> [a] -> Maybe a
+nonEmptyMaybe _ [] = Nothing
+nonEmptyMaybe f xs = Just (f xs)
+
+fMaybe :: (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
+fMaybe _ Nothing = id
+fMaybe f j@(~(Just x)) = go
+    where go Nothing = j
+          go ~(Just y) = Just (f x y)

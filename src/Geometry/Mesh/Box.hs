@@ -10,7 +10,7 @@ import Data.Maybe(isJust)
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Internal(overlap, maxv3, minv3, normalizeDirection)
-import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHits, rayHitsAt'), hitPoint)
+import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHits, rayHitsAt', rayHitsFirstAt), hitPoint)
 
 import Linear.V3(V3(V3))
 
@@ -68,6 +68,9 @@ instance Hittable Box where
     rayHitsAt' = _checkHit go
         where go nxyz (Just ~(a, b)) = \tl -> hitPoint a nxyz : hitPoint b nxyz : tl
               go _ ~Nothing = id
+    rayHitsFirstAt = _checkHit go
+        where go nxyz (Just ~(a, b)) = Just (min (hitPoint a nxyz) (hitPoint b nxyz))
+              go _ ~Nothing = Nothing
 
 instance SurfaceEstimate Box where
     surfaceEstimate' (Box ~(V3 ax ay az) ~(V3 bx by bz)) = 4*dd*dd

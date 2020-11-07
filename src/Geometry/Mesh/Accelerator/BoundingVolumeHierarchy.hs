@@ -7,12 +7,13 @@ module Geometry.Mesh.Accelerator.BoundingVolumeHierarchy (
 
 import Data.Default(Default(def))
 import Data.Foldable(foldl', toList)
+import Data.Maybe(mapMaybe)
 import Data.List(minimumBy, sortOn)
 
 import Geometry.Mesh.Box(Box(Box), Boxable(box), centroid2)
-import Geometry.Mesh.Internal(v3x, v3y, v3z)
+import Geometry.Mesh.Internal(fMaybe, v3x, v3y, v3z, nonEmptyMaybe)
 import Geometry.Mesh.Mesh(Mesh(Mesh))
-import Geometry.Mesh.Ray(Hittable(rayHits, rayHitsAt'))
+import Geometry.Mesh.Ray(Hittable(rayHits, rayHitsAt', rayHitsFirstAt))
 
 import Linear.V3(V3(V3))
 
@@ -86,4 +87,11 @@ instance Hittable f => Hittable (BVH f) where
                   | gob b = go l (go r tl)
                   | otherwise = tl
               go' = foldr (rayHitsAt' ray . fst)
+              gob = rayHits ray
+    rayHitsFirstAt ray = go
+        where go (BVHLeaf es)  = go' es
+              go ~(BVHNode b l r)
+                  | gob b = fMaybe min (go l) (go r)
+                  | otherwise = Nothing
+              go' = nonEmptyMaybe minimum . mapMaybe (rayHitsFirstAt ray . fst)
               gob = rayHits ray
