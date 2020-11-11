@@ -18,7 +18,6 @@ library
   exposed-modules:
       Geometry.Mesh
     , Geometry.Mesh.Accelerator.Base
-    , Geometry.Mesh.Accelerator.Naive
     , Geometry.Mesh.Accelerator.BoundingVolumeHierarchy
     , Geometry.Mesh.Base
     , Geometry.Mesh.Box

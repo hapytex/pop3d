@@ -9,15 +9,15 @@ module Geometry.Mesh.Internal (
   , notNull
   , normalizeDirection, normalizeDirection'
   , fMaybe, nonEmptyMaybe
-  , eolf, spaced, spaceFloating, toEndOfLine
+  , eolf, ignoreLine, spaces1, spaced, spaceFloating, toEndOfLine
   ) where
 
 import Control.Applicative((<|>))
 
 import Linear.V3(V3(V3))
 
-import Text.Parsec(ParsecT, Stream, eof, skipMany)
-import Text.Parsec.Char(char, satisfy, spaces)
+import Text.Parsec(ParsecT, Stream, eof, skipMany, skipMany1)
+import Text.Parsec.Char(char, satisfy, space)
 import Text.Parsec.Number(floating)
 
 eol :: Stream s m Char => ParsecT s u m ()
@@ -26,11 +26,17 @@ eol = char '\n' *> pure ()
 eolf :: Stream s m Char => ParsecT s u m ()
 eolf = eof <|> eol
 
+spaces1 :: Stream s m Char => ParsecT s u m ()
+spaces1 = skipMany1 space
+
 toEndOfLine :: Stream s m Char => ParsecT s u m ()
 toEndOfLine = skipMany (satisfy ('\n' /=))
 
+ignoreLine :: Stream s m Char => ParsecT s u m ()
+ignoreLine = toEndOfLine *> eolf
+
 spaced :: Stream s m Char => ParsecT s u m a -> ParsecT s u m a
-spaced = (spaces *>)
+spaced = (spaces1 *>)
 
 spaceFloating :: (Floating a, Stream s m Char) => ParsecT s u m a
 spaceFloating = spaced floating
