@@ -14,6 +14,8 @@ module Geometry.Mesh.Internal (
 
 import Control.Applicative((<|>))
 
+import Data.Functor(($>))
+
 import Linear.V3(V3(V3))
 
 import Text.Parsec(ParsecT, Stream, eof, skipMany, skipMany1)
