@@ -21,7 +21,7 @@ import Text.Parsec.Char(char, satisfy, space)
 import Text.Parsec.Number(floating)
 
 eol :: Stream s m Char => ParsecT s u m ()
-eol = char '\n' *> pure ()
+eol = char '\n' $> ()
 
 eolf :: Stream s m Char => ParsecT s u m ()
 eolf = eof <|> eol

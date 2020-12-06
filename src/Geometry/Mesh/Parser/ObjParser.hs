@@ -39,7 +39,7 @@ normal = baseCoords (string "vn") g (const (pure ()))
     where g go = V3 <$> go <*> go <*> go
 
 baseCoords :: (Floating b, Stream s m Char) => ParsecT s u m a -> (ParsecT s u m b -> ParsecT s u m d) -> (ParsecT s u m b -> ParsecT s u m c) -> ParsecT s u m d
-baseCoords f g h = try f *> (g go) <* optional (h go) <* eolf
+baseCoords f g h = try f *> g go <* optional (h go) <* eolf
     where go = spaceFloating
 
 comment :: Stream s m Char => ParsecT s u m ()
