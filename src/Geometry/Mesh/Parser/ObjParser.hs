@@ -15,7 +15,7 @@ import Geometry.Mesh.Internal(eolf, spaced, spaceFloating, ignoreLine)
 
 import Linear.V3(V3(V3))
 
-import Text.Parsec(ParsecT, Stream, many, many1, optional)
+import Text.Parsec(ParsecT, Stream, many, many1, optional, try)
 import Text.Parsec.Char(char, string)
 import Text.Parsec.Number(int)
 
@@ -35,10 +35,11 @@ faces = try (char 'f') *> (toTris <$> go <*> many1 go) <* eolf
           toTris i0 is = [ V3 i0 ii ij | (ii : ij : _) <- tails is ]
 
 normal :: (Floating a, Stream s m Char) => ParsecT s u m (V3 a)
-normal = baseCoords (string "vn")
+normal = baseCoords (string "vn") g (const (pure ()))
+    where g go = V3 <$> go <*> go <*> go
 
-baseCoords :: (Floating b, Stream s m Char) => ParsecT s u m a -> ParsecT s u m (V3 b)
-baseCoords f g h = try h *> (g go) <* optional (h go) <* eolf
+baseCoords :: (Floating b, Stream s m Char) => ParsecT s u m a -> (ParsecT s u m b -> ParsecT s u m d) -> (ParsecT s u m b -> ParsecT s u m c) -> ParsecT s u m d
+baseCoords f g h = try f *> (g go) <* optional (h go) <* eolf
     where go = spaceFloating
 
 comment :: Stream s m Char => ParsecT s u m ()
