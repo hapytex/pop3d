@@ -10,6 +10,7 @@ module Geometry.Mesh.Internal (
   , normalizeDirection, normalizeDirection'
   , fMaybe, nonEmptyMaybe
   , eolf, ignoreLine, spaces1, spaced, spaceFloating, toEndOfLine
+  , rollIndex
   ) where
 
 import Control.Applicative((<|>))
@@ -21,6 +22,13 @@ import Linear.V3(V3(V3))
 import Text.Parsec(ParsecT, Stream, eof, skipMany, skipMany1)
 import Text.Parsec.Char(char, satisfy, space)
 import Text.Parsec.Number(floating)
+
+rollIndex :: (f a -> Int -> b) -> (f a -> Int) -> f a -> Int -> b
+rollIndex lu ln = go
+    where go c = go'
+              where cn = ln c
+                    go' i | i < 0 = lu c (cn + i)
+                          | otherwise = lu c i
 
 eol :: Stream s m Char => ParsecT s u m ()
 eol = char '\n' $> ()
