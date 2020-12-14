@@ -8,6 +8,7 @@ import Prelude hiding (head)
 
 import Data.List(tails)
 import Data.List.NonEmpty(NonEmpty((:|)), head)
+import Data.Sequence(Seq, (|>))
 
 import Geometry.Mesh.Internal(eolf, spaced, spaceFloating, ignoreLine)
 --import Geometry.Mesh.Mesh(Mesh(Mesh))
@@ -15,14 +16,25 @@ import Geometry.Mesh.Internal(eolf, spaced, spaceFloating, ignoreLine)
 
 import Linear.V3(V3(V3))
 
-import Text.Parsec(ParsecT, Stream, many, many1, optional, try)
+import Text.Parsec(ParsecT, Stream, many, many1, modifyState, optional, try)
 import Text.Parsec.Char(char, string)
 import Text.Parsec.Number(int)
+
+data ObjParserState a = ObjParserState {
+    vertices :: Seq (V3 a)
+  , normals :: Seq (V3 a)
+  }
 
 --objParser :: (Floating a, Stream s m Char) => ParsecT s u m (Mesh [] Triangle a)
 --objParser = do
     -- vs <- skipMany $ normal <|> texture <|> vertex <|> face <|> ignoreLine
     -- (Mesh . concat) <$> many (faces (vs !!))
+
+addVertex :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a) m (V3 a)
+addVertex = do
+    v <- vertex
+    modifyState (\o@ObjParserState {vertices=vs} -> o {vertices=vs |> v})
+    pure v
 
 vertex :: (Floating a, Stream s m Char) => ParsecT s u m (V3 a)
 vertex = baseCoords (char 'v') g h
