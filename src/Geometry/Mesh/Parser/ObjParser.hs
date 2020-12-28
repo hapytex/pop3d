@@ -13,8 +13,8 @@ import Data.Sequence(Seq, (|>), (!?))
 import qualified Data.Sequence as Seq
 
 import Geometry.Mesh.Internal(eolf, ignoreLine, rollIndex, spaced, spaceFloating)
---import Geometry.Mesh.Mesh(Mesh(Mesh))
---import Geometry.Mesh.Triangle(Triangle(Triangle))
+import Geometry.Mesh.Mesh(Mesh(Mesh))
+import Geometry.Mesh.Triangle(Triangle(Triangle))
 
 import Linear.V2(V2(V2))
 import Linear.V3(V3(V3))
@@ -23,18 +23,12 @@ import Text.Parsec(ParsecT, Stream, getState, many, many1, modifyState, optional
 import Text.Parsec.Char(char, string)
 import Text.Parsec.Number(int)
 
-type TriangleConstructor1 a b = Maybe (V3 a) -> Maybe (V3 a) -> Maybe (V2 a) -> b
-type TriangleConstructor a b = TriangleConstructor1 a (TriangleConstructor1 a (TriangleConstructor1 a b))
 type TrianglePoint a = (V3 a, Maybe (V3 a), Maybe (V2 a))
 type MTrianglePoint a = Maybe (TrianglePoint a)
 type TriaConstr a b = TrianglePoint a -> TrianglePoint a -> TrianglePoint a -> b
 
-_simpleTriangleItem :: (a -> b) -> (v -> a) -> Maybe v -> w -> x -> b
-_simpleTriangleItem f c (Just v) _ _ = f (c v)
-_simpleTriangleItem f c _ _ _ = f (c undefined)
-
-simpleTriangle :: TriangleConstructor a (V3 (V3 a))
-simpleTriangle = _simpleTriangleItem (_simpleTriangleItem (_simpleTriangleItem id)) V3
+_simpleTriangleItem :: TriaConstr a (Triangle a)
+_simpleTriangleItem (v0, _, _) (v1, _, _) (v2, _, _) = Triangle (V3 v0 v1 v2)
 
 data ObjParserState a b = ObjParserState {
     vertices :: Seq (V3 a)
@@ -46,10 +40,16 @@ data ObjParserState a b = ObjParserState {
 seqIdx :: Seq a -> Int -> Maybe a
 seqIdx = rollIndex (!?) Seq.length
 
-objParser :: (Floating a, Stream s m Char) => TriaConstr a b -> ParsecT s (ObjParserState a b) m [b] -- (Mesh [] Triangle a)
-objParser f = do
+meshParser :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a (Triangle a)) m (Mesh [] Triangle a)
+meshParser = objParser' (Mesh . reverse)
+
+objParser' :: (Floating a, Stream s m Char) => ([Triangle a] -> b) -> ParsecT s (ObjParserState a (Triangle a)) m b
+objParser' = objParser _simpleTriangleItem
+
+objParser :: (Floating a, Stream s m Char) => TriaConstr a b -> ([b] -> c) -> ParsecT s (ObjParserState a b) m c
+objParser f g = do
     skipMany (addVertex <|> addNormal <|> addTexture <|> addFaces f <|> comment)
-    reverse . triangles <$> getState
+    g . triangles <$> getState
 
 addVertex :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a b) m ()
 addVertex = do
@@ -69,7 +69,6 @@ addTexture = do
 facesToTriangles :: TriaConstr a b -> NonEmpty (MTrianglePoint a) -> [b]
 facesToTriangles f (i0 :| is) = catMaybes [ go <*> ii <*> ij | (ii : ij : _) <- reverse (tails is) ]
     where go = f <$> i0
-
 
 addFaces :: (Floating a, Stream s m Char) => TriaConstr a b -> ParsecT s (ObjParserState a b) m ()
 addFaces f = do
