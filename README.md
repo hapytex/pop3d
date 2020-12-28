@@ -3,6 +3,9 @@
 [![Build Status of the package by Hackage](https://matrix.hackage.haskell.org/api/v2/packages/pop3d/badge)](https://matrix.hackage.haskell.org/#/package/pop3d)
 [![Hackage version badge](https://img.shields.io/hackage/v/pop3d.svg)](https://hackage.haskell.org/package/pop3d)
 
+pop3d is a rewrite of [**`HaRen`**](https://github.com/RoaldFre/haren) with
+extra functionality and optimizations.
+
 ## Usage
 
 ???
