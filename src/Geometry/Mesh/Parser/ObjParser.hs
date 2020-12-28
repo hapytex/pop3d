@@ -92,7 +92,7 @@ convertFace :: ObjParserState a b -> (Int, [Maybe Int]) -> MTrianglePoint a
 convertFace ObjParserState { vertices=vs, normals=ns, textures=ts } = go
     where go (i0, []) = go' i0 Nothing Nothing
           go (i0, [i1]) = go' i0 i1 Nothing
-          go (i0, (i1:i2:_)) = go' i0 i1 i2
+          go (i0, i1:i2:_) = go' i0 i1 i2
           go' i0 i1 i2 = (, i1 >>= ni, i2 >>= ti) <$> vi i0
           vi = seqIdx vs
           ni = seqIdx ns
