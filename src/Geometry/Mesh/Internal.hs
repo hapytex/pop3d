@@ -19,9 +19,9 @@ import Data.Functor(($>))
 
 import Linear.V3(V3(V3))
 
-import Text.Parsec(ParsecT, Stream, eof, skipMany, skipMany1)
-import Text.Parsec.Char(char, satisfy, space)
-import Text.Parsec.Number(floating)
+import Text.Parsec(ParsecT, Stream, oneOf, eof, skipMany, skipMany1)
+import Text.Parsec.Char(char, satisfy)
+import Text.Parsec.Number(sign, floating)
 
 rollIndex :: (f a -> Int -> b) -> (f a -> Int) -> f a -> Int -> b
 rollIndex lu ln = go
@@ -37,7 +37,7 @@ eolf :: Stream s m Char => ParsecT s u m ()
 eolf = eof <|> eol
 
 spaces1 :: Stream s m Char => ParsecT s u m ()
-spaces1 = skipMany1 space
+spaces1 = skipMany1 (oneOf " \t")
 
 toEndOfLine :: Stream s m Char => ParsecT s u m ()
 toEndOfLine = skipMany (satisfy ('\n' /=))
@@ -49,7 +49,7 @@ spaced :: Stream s m Char => ParsecT s u m a -> ParsecT s u m a
 spaced = (spaces1 *>)
 
 spaceFloating :: (Floating a, Stream s m Char) => ParsecT s u m a
-spaceFloating = spaced floating
+spaceFloating = spaced (sign <*> floating)
 
 overlap :: Ord a => a -> a -> a -> a -> Bool
 overlap a0 a1 b0 b1 = a0 <= b1 && b0 <= a1

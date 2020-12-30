@@ -6,6 +6,7 @@ import Prelude hiding (head)
 
 import Control.Applicative((<|>))
 
+import Data.Default(Default(def))
 import Data.List(tails)
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Maybe(catMaybes)
@@ -19,7 +20,7 @@ import Geometry.Mesh.Triangle(Triangle(Triangle))
 import Linear.V2(V2(V2))
 import Linear.V3(V3(V3))
 
-import Text.Parsec(ParsecT, Stream, getState, many, many1, modifyState, optional, optionMaybe, skipMany, try)
+import Text.Parsec(ParseError, ParsecT, Stream, getState, many, many1, modifyState, optional, optionMaybe, runP, skipMany, try)
 import Text.Parsec.Char(char, string)
 import Text.Parsec.Number(int)
 
@@ -37,8 +38,14 @@ data ObjParserState a b = ObjParserState {
   , triangles :: [b]
   }
 
+instance Default (ObjParserState a b) where
+    def = ObjParserState def def def def
+
 seqIdx :: Seq a -> Int -> Maybe a
 seqIdx = rollIndex (!?) Seq.length
+
+readMesh :: Floating a => FilePath -> IO (Either ParseError (Mesh [] Triangle a))
+readMesh fname = runP meshParser def fname <$> readFile fname
 
 meshParser :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a (Triangle a)) m (Mesh [] Triangle a)
 meshParser = objParser' (Mesh . reverse)
@@ -48,7 +55,7 @@ objParser' = objParser _simpleTriangleItem
 
 objParser :: (Floating a, Stream s m Char) => TriaConstr a b -> ([b] -> c) -> ParsecT s (ObjParserState a b) m c
 objParser f g = do
-    skipMany (addVertex <|> addNormal <|> addTexture <|> addFaces f <|> comment)
+    skipMany (addNormal <|> addVertex <|> addTexture <|> addFaces f <|> comment)
     g . triangles <$> getState
 
 addVertex :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a b) m ()
