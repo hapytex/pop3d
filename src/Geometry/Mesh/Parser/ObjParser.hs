@@ -2,7 +2,7 @@
 
 module Geometry.Mesh.Parser.ObjParser where
 
-import Prelude hiding (head)
+import Prelude
 
 import Control.Applicative((<|>))
 
@@ -20,7 +20,7 @@ import Geometry.Mesh.Triangle(Triangle(Triangle))
 import Linear.V2(V2(V2))
 import Linear.V3(V3(V3))
 
-import Text.Parsec(ParseError, ParsecT, Stream, getState, many, many1, modifyState, optional, optionMaybe, runP, skipMany, try)
+import Text.Parsec(ParseError, ParsecT, Stream, eof, getState, many, many1, modifyState, optional, optionMaybe, runP, skipMany, try)
 import Text.Parsec.Char(char, string)
 import Text.Parsec.Number(int)
 
@@ -56,6 +56,7 @@ objParser' = objParser _simpleTriangleItem
 objParser :: (Floating a, Stream s m Char) => TriaConstr a b -> ([b] -> c) -> ParsecT s (ObjParserState a b) m c
 objParser f g = do
     skipMany (addNormal <|> addVertex <|> addTexture <|> addFaces f <|> comment)
+    eof
     g . triangles <$> getState
 
 addVertex :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a b) m ()
