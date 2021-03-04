@@ -26,3 +26,4 @@ repository*](https://github.com/hapytex/pop3d).
 You can contact the package maintainer by sending a mail to
 [`hapytexeu+gh@gmail.com`](mailto:hapytexeu+gh@gmail.com).
 
+[![Build Status of the package by GitHub actions](https://github.com/hapytex/pop3d/actions/workflows/build-ci.yml/badge.svg)](https://github.com/hapytex/pop3d/actions/workflows/build-ci.yml)
