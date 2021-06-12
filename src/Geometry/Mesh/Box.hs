@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFoldable, DeriveFunctor, Safe #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveFoldable, DeriveFunctor, DeriveGeneric, DeriveTraversable, Safe #-}
 
 module Geometry.Mesh.Box (
     Box(Box, boxMin, boxMax)
@@ -6,18 +6,25 @@ module Geometry.Mesh.Box (
   , centroid2
   ) where
 
+import Control.DeepSeq(NFData)
+
+import Data.Data(Data)
 import Data.Maybe(isJust)
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Internal(overlap, maxv3, minv3, normalizeDirection)
 import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHits, rayHitsAt', rayHitsFirstAt), hitPoint)
 
+import GHC.Generics(Generic, Generic1)
+
 import Linear.V3(V3(V3))
 
 data Box a = Box {
     boxMin :: !(P3 a)
   , boxMax :: !(P3 a)
-  } deriving (Eq, Foldable, Functor, Ord, Read, Show)
+  } deriving (Data, Eq, Foldable, Functor, Generic, Generic1, Ord, Read, Show, Traversable)
+
+instance NFData a => NFData (Box a)
 
 centroid2 :: Num a => Box a -> V3 a
 centroid2 (Box ma mb) = ma + mb
@@ -31,7 +38,7 @@ class Boxable f where
 
     box' :: (Num a, Ord a) => f a -> (V3 a, V3 a)
     box' x = let ~(Box a b) = box x in (a, b)
-    
+
     inBox :: (Num a, Ord a) => f a -> Box a -> Bool
     inBox x ~(Box ~(V3 x0 y0 z0) ~(V3 x1 y1 z1)) = let ~(~(V3 x2 y2 z2), ~(V3 x3 y3 z3)) = box' x in overlap x0 x1 x2 x3 && overlap y0 y1 y2 y3 && overlap z0 z1 z2 z3
     {-# MINIMAL box | box' #-}

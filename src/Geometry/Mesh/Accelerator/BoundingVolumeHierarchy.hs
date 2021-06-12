@@ -1,10 +1,11 @@
-{-# LANGUAGE BangPatterns, DeriveFoldable, DeriveFunctor, Safe #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveFoldable, DeriveFunctor, DeriveGeneric, DeriveTraversable, Safe #-}
 
 module Geometry.Mesh.Accelerator.BoundingVolumeHierarchy (
     BVH(BVHLeaf, BVHNode)
   , buildBVH
   ) where
 
+import Data.Data(Data)
 import Data.Default(Default(def))
 import Data.Foldable(foldl', toList)
 import Data.Maybe(mapMaybe)
@@ -15,12 +16,14 @@ import Geometry.Mesh.Internal(fMaybe, v3x, v3y, v3z, nonEmptyMaybe)
 import Geometry.Mesh.Mesh(Mesh(Mesh))
 import Geometry.Mesh.Ray(Hittable(rayHits, rayHitsAt', rayHitsFirstAt))
 
+import GHC.Generics(Generic)
+
 import Linear.V3(V3(V3))
 
 data BVH f a
   = BVHLeaf [(f a, Box a)]
   | BVHNode (Box a) (BVH f a) (BVH f a)
-  deriving (Eq, Foldable, Functor, Ord, Read, Show)
+  deriving (Data, Eq, Foldable, Functor, Generic, Ord, Read, Show, Traversable)
 
 instance Default (BVH f a) where
     def = BVHLeaf []

@@ -1,8 +1,12 @@
-{-# LANGUAGE DeriveFoldable, DeriveFunctor, Safe #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveFoldable, DeriveFunctor, DeriveGeneric, DeriveTraversable, Safe #-}
 
 module Geometry.Mesh.Triangle (
     Triangle(Triangle)
   ) where
+
+import Control.DeepSeq(NFData)
+
+import Data.Data(Data)
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'), P3)
 import Geometry.Mesh.Box(Boxable(box'))
@@ -10,9 +14,15 @@ import Geometry.Mesh.Ray(Ray(Ray), Hittable(rayHitsAt', rayHitsFirstAt), HitPoin
 import Geometry.Mesh.Internal(maxv3, minv3, dot)
 import Geometry.Mesh.Transform(Transformable(transform, scale, scale', shift, shift', rotate, rotate', rotateX, rotateY, rotateZ))
 
+import GHC.Generics(Generic, Generic1)
+
 import Linear.V3(V3(V3), cross)
 
-newtype Triangle a = Triangle (V3 (P3 a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
+newtype Triangle a
+  = Triangle (V3 (P3 a))
+  deriving (Data, Eq, Foldable, Functor, Generic, Generic1, Ord, Read, Show, Traversable)
+
+instance NFData a => NFData (Triangle a)
 
 instance SurfaceEstimate Triangle where
     surfaceEstimate' ~(Triangle ~(V3 ~(V3 ax ay az) ~(V3 bx by bz) ~(V3 cx cy cz))) = dxy*dxy + dxz*dxz + dyz*dyz

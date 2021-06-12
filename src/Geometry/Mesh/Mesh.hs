@@ -1,9 +1,12 @@
-{-# LANGUAGE DeriveFoldable, DeriveFunctor, Safe #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveFoldable, DeriveFunctor, DeriveGeneric, DeriveTraversable, Safe #-}
 
 module Geometry.Mesh.Mesh (
     Mesh(Mesh)
   ) where
 
+import Control.DeepSeq(NFData)
+
+import Data.Data(Data)
 import Data.Foldable(foldl')
 
 import Geometry.Mesh.Base(SurfaceEstimate(surfaceEstimate'))
@@ -12,7 +15,13 @@ import Geometry.Mesh.Internal(maxv3, minv3, fMaybe)
 import Geometry.Mesh.Ray(Hittable(rayHits, rayHitsAt', rayHitsFirstAt))
 import Geometry.Mesh.Transform(Transformable(transform, scale, scale', shift, shift', rotate, rotate', rotateX, rotateY, rotateZ))
 
-newtype Mesh f t a = Mesh (f (t a)) deriving (Eq, Foldable, Functor, Ord, Read, Show)
+import GHC.Generics(Generic, Generic1)
+
+newtype Mesh f t a
+  = Mesh (f (t a))
+  deriving (Data, Eq, Foldable, Functor, Generic, Generic1, Ord, Read, Show, Traversable)
+
+instance NFData (f (t a)) => NFData (Mesh f t a)
 
 instance Semigroup (f (t a)) => Semigroup (Mesh f t a) where
     ~(Mesh fa) <> ~(Mesh fb) = Mesh (fa <> fb)
