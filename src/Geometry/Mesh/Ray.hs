@@ -1,4 +1,4 @@
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveFunctor, DeriveFoldable, DeriveGeneric, DeriveTraversable, Safe #-}
 
 module Geometry.Mesh.Ray (
     Ray(Ray, origin, direction, near, far)
@@ -6,6 +6,12 @@ module Geometry.Mesh.Ray (
   , hitPoint
   , Hittable(rayHits, rayHitsWithFast, rayHitsAt, rayHitsAt', rayHitsFirstAt)
   ) where
+
+import Control.DeepSeq(NFData, NFData1)
+
+import Data.Data(Data)
+
+import GHC.Generics(Generic, Generic1)
 
 import Geometry.Mesh.Base(P3)
 import Geometry.Mesh.Internal(notNull, nonEmptyMaybe)
@@ -15,12 +21,18 @@ data Ray a = Ray {
   , direction :: P3 a
   , near :: a
   , far :: a
-  } deriving (Eq, Ord, Read, Show)
+  } deriving (Data, Eq, Foldable, Functor, Generic, Generic1, Ord, Read, Show, Traversable)
+
+instance NFData a => NFData (Ray a)
 
 data HitPoint a = HitPoint {
     tHitNumerator :: a
   , tHitDenominator :: a  -- should be positive
-  }
+  } deriving (Data, Foldable, Functor, Generic, Generic1, Read, Show, Traversable)
+
+instance NFData1 HitPoint
+
+instance NFData a => NFData (HitPoint a)
 
 hitPoint :: (Ord a, Num a) => a -> a -> HitPoint a
 hitPoint d n
@@ -54,7 +66,7 @@ class Hittable f where
 
     rayHitsAt' :: (Num a, Ord a) => Ray a -> f a -> [HitPoint a] -> [HitPoint a]
     rayHitsAt' r c = (rayHitsAt r c ++)
-    
+
     rayHitsFirstAt :: (Num a, Ord a) => Ray a -> f a -> Maybe (HitPoint a)
     rayHitsFirstAt r = nonEmptyMaybe minimum . rayHitsAt r
     {-# MINIMAL rayHitsAt | rayHitsAt' #-}
