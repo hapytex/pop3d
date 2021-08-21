@@ -1,5 +1,5 @@
 # pop3d
-[![Build Status of the package by Travis](https://travis-ci.com/hapytex/pop3d.svg?branch=master)](https://travis-ci.com/hapytex/pop3d)
+[![Build Status of the package by GitHub actions](https://github.com/hapytex/pop3d/actions/workflows/build-ci.yml/badge.svg)](https://github.com/hapytex/pop3d/actions/workflows/build-ci.yml)
 [![Build Status of the package by Hackage](https://matrix.hackage.haskell.org/api/v2/packages/pop3d/badge)](https://matrix.hackage.haskell.org/#/package/pop3d)
 [![Hackage version badge](https://img.shields.io/hackage/v/pop3d.svg)](https://hackage.haskell.org/package/pop3d)
 

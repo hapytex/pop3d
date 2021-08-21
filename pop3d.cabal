@@ -33,6 +33,7 @@ library
       base >= 4.7 && < 5
     , containers >=0.1.0.0
     , data-default >=0.1
+    , deepseq >=1.4.3.0
     , linear >=0.2
     , parsec >=3.0
     , parsec3-numbers >=0.0.4
