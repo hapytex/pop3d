@@ -5,7 +5,7 @@ module Geometry.Mesh.Accelerator.BoundingVolumeHierarchy (
   , buildBVH
   ) where
 
-import Data.Default(Default(def))
+import Data.Default.Class(Default(def))
 import Data.Foldable(foldl', toList)
 import Data.Maybe(mapMaybe)
 import Data.List(minimumBy, sortOn)

@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, Safe, TupleSections #-}
+{-# LANGUAGE FlexibleContexts, Safe, TupleSections, UndecidableInstances #-}
 
 module Geometry.Mesh.Parser.ObjParser where
 
@@ -6,7 +6,7 @@ import Prelude
 
 import Control.Applicative((<|>))
 
-import Data.Default(Default(def))
+import Data.Default.Class(Default(def))
 import Data.List(tails)
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Maybe(catMaybes)
@@ -38,13 +38,13 @@ data ObjParserState a b = ObjParserState {
   , triangles :: [b]
   }
 
-instance Default (ObjParserState a b) where
+instance (Default (Seq (V2 a)), Default (Seq (V3 a))) => Default (ObjParserState a b) where
     def = ObjParserState def def def def
 
 seqIdx :: Seq a -> Int -> Maybe a
 seqIdx = rollIndex (!?) Seq.length
 
-readMesh :: Floating a => FilePath -> IO (Either ParseError (Mesh [] Triangle a))
+readMesh :: (Default (Seq (V2 a)), Default (Seq (V3 a)), Floating a) => FilePath -> IO (Either ParseError (Mesh [] Triangle a))
 readMesh fname = runP meshParser def fname <$> readFile fname
 
 meshParser :: (Floating a, Stream s m Char) => ParsecT s (ObjParserState a (Triangle a)) m (Mesh [] Triangle a)
@@ -115,7 +115,7 @@ faces' = try (char 'f') *> ((:|) <$> go <*> many1 go) <* eolf
     where go = spaced findex
 
 -- triangles :: Stream s m Char => ParsecT s (ObjParserState a b)
---    
+--
 --          toTris i0 is = [ V3 i0 ii ij | (ii : ij : _) <- tails is ]
 
 baseCoords :: (Floating b, Stream s m Char) => ParsecT s u m a -> (ParsecT s u m b -> ParsecT s u m d) -> (ParsecT s u m b -> ParsecT s u m c) -> ParsecT s u m d
